@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 import math
-v_path = '/home/pradyun/CV_practice/Assignment-4/Mallet_videos/IMG_9105.MOV'
+v_path = '/home/pradyun/IP_Assignment/Assignment-4/Mallet_videos/IMG_9105.MOV'
 cap = cv.VideoCapture(v_path)
 fps =cap.get(cv.CAP_PROP_FPS)
 size = (int(cap.get(cv.CAP_PROP_FRAME_WIDTH)),int(cap.get(cv.CAP_PROP_FRAME_HEIGHT)))
