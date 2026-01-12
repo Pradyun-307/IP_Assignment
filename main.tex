@@ -1,0 +1,180 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{amsmath}
+\title{CV Assignment}
+\author{Pradyun Shetty}
+\date{January 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Identification of Mallet in Videos}
+
+\begin{itemize}
+    \item In this task, the video was processed by copying its file path and using the function \texttt{cv.VideoCapture(videoPath)}. The video was processed frame by frame after checking whether it was successfully opened using \texttt{video.isOpened()}. During debugging, \texttt{cv.imshow()} was used to display the processed frames sequentially.
+    
+    \item I initially experimented with the V channel of the HSV color space, as the mallet had values close to 255 in this channel, which is similar to the L channel in the LAB color space. After experimentation, I settled on the L channel as it provided more consistent contrast across different videos.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/v_channel.png}
+        \caption{V channel (HSV)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/l_channel.png}
+        \caption{L channel (LAB)}
+    \end{subfigure}
+    \caption{Comparison of V and L channels. The mallet is more clearly visible in the L channel.}
+\end{figure}
+
+\begin{itemize}
+    \item I also tested the A, S, and B channels. However, in these channels the mallet was not clearly distinguishable from the background, which caused difficulties during thresholding.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.3\textwidth}
+        \includegraphics[width=\linewidth]{images/a_channel.png}
+        \caption{A channel}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \includegraphics[width=\linewidth]{images/s_channel.png}
+        \caption{S channel}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.3\textwidth}
+        \includegraphics[width=\linewidth]{images/b_channel.png}
+        \caption{B channel}
+    \end{subfigure}
+    \caption{Channels in which the mallet is not clearly visible.}
+\end{figure}
+
+\begin{itemize}
+    \item Gamma correction was tested, but each video had different lighting conditions, making it difficult to select a single gamma value that worked consistently.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{images/gamma_correction.png}
+    \caption{Effect of gamma correction. Performance varied significantly across videos.}
+\end{figure}
+
+\begin{itemize}
+    \item Histogram equalization (both global and CLAHE) was also evaluated. These methods increased overall contrast but significantly amplified noise and background artifacts, which were difficult to suppress in later stages.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/hist_equalization.png}
+        \caption{Global histogram equalization}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/clahe.png}
+        \caption{CLAHE}
+    \end{subfigure}
+    \caption{Histogram-based contrast enhancement increased noise and unwanted artifacts.}
+\end{figure}
+
+\begin{itemize}
+    \item Image normalization was applied as it enhanced bright pixels while suppressing darker regions. This worked well with the chosen L channel, where the mallet was already much brighter than the background.
+    
+    \item Gaussian blurring was applied, and its kernel size and sigma value were tuned to control the amount of smoothing.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/l_channel.png}
+        \caption{L channel before normalization}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/l_channel_normalized.png}
+        \caption{After normalization and Gaussian blur}
+    \end{subfigure}
+    \caption{Effect of normalization and smoothing on the L channel.}
+\end{figure}
+
+\begin{itemize}
+    \item Global thresholding was initially used and tuned to successfully segment the mallet. Adaptive thresholding, however, resulted in inverted regions due to strong local intensity variations.
+    
+    \item To address this, both approaches were combined using \texttt{cv.bitwise\_and()}. The adaptive thresholded image was first converted into a mask using contours and then combined with the global threshold result.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/global_threshold.png}
+        \caption{Global thresholding}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/adaptive_threshold.png}
+        \caption{Adaptive thresholding}
+    \end{subfigure}
+    \caption{Comparison of global and adaptive thresholding outputs.}
+\end{figure}
+
+\begin{itemize}
+    \item Morphological operations were explored, but most did not improve the segmentation quality. Erosion was applied to the adaptive thresholded image to increase the likelihood of forming closed contours.
+    
+    \item In the second video, white line artifacts were also detected due to their high L-channel values. To suppress these artifacts, the B channel was inverse-thresholded and combined using a bitwise AND operation. A red-channel filter was also applied to further refine the segmentation.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/segmented_with_noise.png}
+        \caption{Segmentation with artifacts}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.45\textwidth}
+        \includegraphics[width=\linewidth]{images/final_segmentation.png}
+        \caption{Final segmentation}
+    \end{subfigure}
+    \caption{Removal of high-intensity artifacts and final mallet detection.}
+\end{figure}
+
+\section{Identification of Cones from Images}
+
+\section{Identification of ArUco Markers from Videos}
+
+The built-in ArUco detection functions in OpenCV are highly robust, and only minimal preprocessing was required. Sharpening filters were applied to enhance edge clarity and improve marker detection reliability. After experimentation, the sharpening kernel
+\[
+\begin{bmatrix}
+0 & -1 & 0 \\
+-1 & 5 & -1 \\
+0 & -1 & 0
+\end{bmatrix}
+\]
+was applied twice, as this produced the most consistent detection results.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\linewidth]{images/aruco_no_sharpen.png}
+        \caption{No sharpening}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\linewidth]{images/aruco_sharpen_once.png}
+        \caption{Sharpened once}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\linewidth]{images/aruco_sharpen_twice.png}
+        \caption{Sharpened twice}
+    \end{subfigure}
+    \caption{Effect of sharpening on ArUco marker detection.}
+\end{figure}
+
+\end{document}
